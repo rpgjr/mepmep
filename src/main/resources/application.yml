@@ -1,0 +1,23 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: mepmep
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/mepmep?createDatabaseIfNotExist=true&serverTimezone=UTC}
+    username: ${DB_USER:root}
+    password: ${DB_PASS:}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+app:
+  tmdb:
+    base-url: https://api.themoviedb.org/3
+    token: ${TMDB_TOKEN:}
+  jwt:
+    secret: ${JWT_SECRET:change-me-change-me-change-me-change-me-1234}
+    expiry-hours: 168
+  cors-origins: ${CORS_ORIGINS:http://localhost:5173}
