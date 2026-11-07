@@ -49,6 +49,18 @@ class AuthLibraryTest {
     }
 
     @Test
+    void corsAllowsConfiguredOriginOnly() throws Exception {
+        mvc.perform(options("/api/auth/login")
+                .header("Origin", "http://localhost:5173")
+                .header("Access-Control-Request-Method", "POST")
+                .header("Access-Control-Request-Headers", "content-type,authorization"))
+            .andExpect(status().isOk())
+            .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"));
+        mvc.perform(get("/api/auth/me").header("Origin", "https://evil.example"))
+            .andExpect(status().isForbidden());
+    }
+
+    @Test
     void libraryNeedsLogin() throws Exception {
         mvc.perform(get("/api/library/favorites")).andExpect(status().isUnauthorized());
     }

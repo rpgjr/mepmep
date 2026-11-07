@@ -45,7 +45,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    CorsConfigurationSource corsSource(AppProperties props) {
+    CorsConfigurationSource corsConfigurationSource(AppProperties props) { // this exact bean name is what Spring Security looks for
         CorsConfiguration cfg = new CorsConfiguration();
         cfg.setAllowedOrigins(props.corsOrigins());
         cfg.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
