@@ -1,5 +1,5 @@
 # ---- build stage: compile the jar with Maven + JDK 25 ----
-FROM maven:3.9-eclipse-temurin-25 AS build
+FROM maven:3.9-eclipse-temurin-26 AS build
 WORKDIR /app
 # Copy pom.xml first so Docker can cache the downloaded libraries between builds
 COPY pom.xml .
