@@ -61,6 +61,13 @@ class AuthLibraryTest {
     }
 
     @Test
+    void healthEndpointIsPublic() throws Exception {
+        mvc.perform(get("/actuator/health"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @Test
     void libraryNeedsLogin() throws Exception {
         mvc.perform(get("/api/library/favorites")).andExpect(status().isUnauthorized());
     }
