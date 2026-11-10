@@ -38,7 +38,6 @@ The React app lives in the sibling repo `mepmep-ui`.
 (static analysis of the Java code). It also runs every Monday.
 
 GitHub secret `RENDER_DEPLOY_HOOK_URL` is the Render deploy hook. Without it, `deploy` is skipped.
-Dependabot sends one grouped update PR per month (Maven, Docker, Actions).
 
 ## Environment variables
 
