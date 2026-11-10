@@ -13,6 +13,15 @@ spring:
       ddl-auto: update
     open-in-view: false
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health      # only /actuator/health is public. Nothing else is exposed.
+  endpoint:
+    health:
+      show-details: never
+
 app:
   tmdb:
     base-url: https://api.themoviedb.org/3
