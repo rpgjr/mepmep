@@ -19,16 +19,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     "spring.datasource.url=jdbc:h2:mem:test;MODE=MySQL",
     "spring.datasource.username=sa",
     "spring.datasource.password=",
-    "spring.jpa.hibernate.ddl-auto=create-drop"
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "app.auth.check-mx=false"
 })
 class AuthLibraryTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
 
+    static final String PASSWORD = "secret-123";
+
+    private String registerBody(String email, String password) {
+        return "{\"email\":\"%s\",\"displayName\":\"Tester\",\"password\":\"%s\"}".formatted(email, password);
+    }
+
     private String register(String email) throws Exception {
-        String body = """
-            {"email":"%s","displayName":"Tester","password":"secret123"}""".formatted(email);
-        String res = mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(body))
+        String res = mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(registerBody(email, PASSWORD)))
             .andExpect(status().isCreated())
             .andReturn().getResponse().getContentAsString();
         return json.readTree(res).get("token").asText();
@@ -36,16 +41,33 @@ class AuthLibraryTest {
 
     @Test
     void registerLoginAndRejectDuplicate() throws Exception {
-        register("a@test.com");
-        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"a@test.com\",\"displayName\":\"x\",\"password\":\"secret123\"}"))
+        register("a@real-mail.dev");
+        mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(registerBody("a@real-mail.dev", PASSWORD)))
             .andExpect(status().isConflict());
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"a@test.com\",\"password\":\"secret123\"}"))
+                .content("{\"email\":\"a@real-mail.dev\",\"password\":\"" + PASSWORD + "\"}"))
             .andExpect(status().isOk()).andExpect(jsonPath("$.token").exists());
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                .content("{\"email\":\"a@test.com\",\"password\":\"wrong\"}"))
+                .content("{\"email\":\"a@real-mail.dev\",\"password\":\"wrong\"}"))
             .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void weakPasswordsAreRejected() throws Exception {
+        for (String weak : new String[] {"short1!", "NOLOWER-123", "nonumber-here", "nospecial123"}) {
+            mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(registerBody("weak@real-mail.dev", weak)))
+                .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    void sampleAndFakeEmailsAreRejected() throws Exception {
+        for (String bad : new String[] {"not-an-email", "a@b", "a@@real-mail.dev", "x@mailinator.com", "test@gmail.com",
+                "sample@email.com", "test123@gmail.com", "john@example.com", "asdf@yahoo.com", "aaaa@gmail.com"}) {
+            mvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON).content(registerBody(bad, PASSWORD)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+        }
     }
 
     @Test
@@ -74,7 +96,7 @@ class AuthLibraryTest {
 
     @Test
     void favoritesAndProgressFlow() throws Exception {
-        String auth = "Bearer " + register("b@test.com");
+        String auth = "Bearer " + register("b@real-mail.dev");
         String item = "{\"mediaType\":\"movie\",\"tmdbId\":603,\"title\":\"The Matrix\",\"posterPath\":\"/p.jpg\"}";
 
         mvc.perform(post("/api/library/favorites").header("Authorization", auth)
