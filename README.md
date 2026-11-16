@@ -42,3 +42,5 @@ GitHub secret `RENDER_DEPLOY_HOOK_URL` is the Render deploy hook. Without it, `d
 ## Environment variables
 
 See `.env.example`. `TMDB_TOKEN`, `DB_PASS` and `JWT_SECRET` are secrets: set them on the host, never commit them.
+
+Sign-up rejects sample or throwaway emails (`test@gmail.com`, `sample@email.com`, mailinator and similar) and domains with no mail server. Set `CHECK_EMAIL_DOMAIN=false` to skip the DNS check.

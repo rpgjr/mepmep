@@ -16,7 +16,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AuthController {
     public record RegisterRequest(@Email @NotBlank String email,
                                   @NotBlank @Size(max = 60) String displayName,
-                                  @NotBlank @Size(min = 6, max = 100) String password) {}
+                                  @NotBlank @Size(max = 100) String password) {}
 
     public record LoginRequest(@NotBlank String email, @NotBlank String password) {}
 
@@ -27,17 +27,25 @@ public class AuthController {
     private final UserRepository users;
     private final PasswordEncoder encoder;
     private final JwtService jwt;
+    private final EmailPolicy emailPolicy;
 
-    public AuthController(UserRepository users, PasswordEncoder encoder, JwtService jwt) {
+    public AuthController(UserRepository users, PasswordEncoder encoder, JwtService jwt, EmailPolicy emailPolicy) {
         this.users = users;
         this.encoder = encoder;
         this.jwt = jwt;
+        this.emailPolicy = emailPolicy;
     }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public AuthResponse register(@Valid @RequestBody RegisterRequest req) {
         String email = req.email().trim().toLowerCase();
+        String emailProblem = emailPolicy.problem(email);
+        if (emailProblem != null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, emailProblem);
+        var passwordProblems = PasswordPolicy.problems(req.password());
+        if (!passwordProblems.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PasswordPolicy.message(passwordProblems));
+        }
         if (users.existsByEmail(email)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
         }
